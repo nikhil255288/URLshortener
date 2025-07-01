@@ -8,21 +8,34 @@ router.get('/:code', async (req, res) => {
   const { code } = req.params;
 
   try {
+    // Ensure code is trimmed/lowercased for consistency
     const url = await Url.findOneAndUpdate(
-      { shortCode: code },
-      { $inc: { clicks: 1 } }, // Increment click count
-      { new: true }            // Return updated document
+      { shortCode: code.trim() },
+      { $inc: { clicks: 1 } },
+      { new: true }
     );
 
     if (!url) {
-      return res.status(404).send('❌ Short URL not found');
+      return res.status(404).send(`
+        <h2 style="font-family: sans-serif; color: red; text-align: center;">
+          ❌ Short URL not found
+        </h2>
+      `);
     }
 
-    // Redirect user to the original URL
-    return res.redirect(url.originalUrl);
+    // ✅ Add fallback to include http(s) in case missing
+    const redirectUrl = url.originalUrl.startsWith("http")
+      ? url.originalUrl
+      : `https://${url.originalUrl}`;
+
+    return res.redirect(redirectUrl);
   } catch (error) {
     console.error('🔴 Redirect error:', error.message);
-    return res.status(500).send('❌ Server error during redirection');
+    return res.status(500).send(`
+      <h2 style="font-family: sans-serif; color: red; text-align: center;">
+        ❌ Server error during redirection
+      </h2>
+    `);
   }
 });
 
