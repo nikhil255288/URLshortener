@@ -20,12 +20,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Middleware
+// ✅ Allowed Origins for CORS
+const allowedOrigins = [
+  'http://localhost:8080', // Local Vite dev server
+  'https://urlshortnerfrontendd.netlify.app', // Netlify frontend
+];
+
+// ✅ CORS Configuration
 app.use(cors({
-  origin: 'http://localhost:8080',
-  methods: ['GET', 'POST', 'DELETE'], // include DELETE for future features
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'DELETE'],
   credentials: true,
 }));
+
+// ✅ Middleware
 app.use(express.json());
 app.use(cookieParser());
 
@@ -35,7 +49,7 @@ app.use('/s', redirectRoutes);          // GET /s/:shortCode
 app.use('/history', historyRoutes);     // GET /history (protected)
 app.use('/analytics', analyticsRoutes); // GET /analytics (protected)
 app.use('/auth', authRoutes);           // /auth/login, /auth/signup, /auth/refresh
-app.use('/url', urlRoutes);             // 🔥 PUT/DELETE routes (like delete)
+app.use('/url', urlRoutes);             // PUT/DELETE routes like delete
 
 // ✅ Root test route
 app.get('/', (req, res) => {
